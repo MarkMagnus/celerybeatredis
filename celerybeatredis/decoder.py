@@ -22,12 +22,16 @@ class DateTimeDecoder(json.JSONDecoder):
             return d
 
         type = d.pop('__type__')
-        try:
-            dateobj = datetime(**d)
-            return dateobj
-        except:
-            d['__type__'] = type
-            return d
+        if type == 'set':
+            return set(d.pop('list'))
+
+        if type == 'datetime':
+            try:
+                dateobj = datetime(**d)
+                return dateobj
+            except:
+                d['__type__'] = type
+                return d
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -47,6 +51,11 @@ class DateTimeEncoder(json.JSONEncoder):
                 'minute': obj.minute,
                 'second': obj.second,
                 'microsecond': obj.microsecond,
+            }
+        if isinstance(obj, set):
+            return {
+                '__type__': 'set',
+                'list': list(obj)
             }
         else:
             return json.JSONEncoder.default(self, obj)

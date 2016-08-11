@@ -4,15 +4,11 @@
 # Licensed under the Apache License, Version 2.0 (the 'License'); you may not
 # use this file except in compliance with the License. You may obtain a copy
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
+import celery.schedules
 import datetime
-from copy import deepcopy
-from redis import StrictRedis
-import celery
+import json
 
-try:
-    import simplejson as json
-except ImportError:
-    import json
+from copy import deepcopy
 
 from .decoder import DateTimeDecoder, DateTimeEncoder
 from .exceptions import TaskTypeError
@@ -224,7 +220,7 @@ class PeriodicTask(object):
         => rdb is hidden
         :return:
         """
-        for k, v in vars(self).iteritems():
+        for k, v in vars(self).items():
             if k == 'data':
                 yield 'schedule', self.schedule
             else:  # we can expose everything else

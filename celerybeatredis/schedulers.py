@@ -5,13 +5,8 @@
 # use this file except in compliance with the License. You may obtain a copy
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
 import datetime
-import logging
-from functools import partial
-# we don't need simplejson, builtin json module is good enough
-import json
-from copy import deepcopy
 
-from celery.beat import Scheduler, ScheduleEntry
+from celery.beat import Scheduler
 from redis import StrictRedis
 from celery import current_app
 import kombu.utils
@@ -19,8 +14,7 @@ import celery.schedules
 from redis.exceptions import LockError
 
 from .task import PeriodicTask
-from .exceptions import ValidationError, TaskTypeError
-from .decoder import DateTimeDecoder, DateTimeEncoder
+from .exceptions import TaskTypeError
 from .globals import logger
 
 
@@ -306,7 +300,10 @@ class RedisScheduler(Scheduler):
                 name = self._dirty.pop()
                 _tried.add(name)
                 # Saving the entry back into Redis DB.
-                self.rdb.set(name, self.schedule[name].jsondump())
+                scheduled_task = self.schedule[name]
+                periodic_task = scheduled_task._task
+                json = periodic_task.jsondump()
+                self.rdb.set(name, json)
         except Exception as exc:
             # retry later
             self._dirty |= _tried
